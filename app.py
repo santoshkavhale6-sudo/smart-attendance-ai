@@ -19,6 +19,21 @@ camera_url = "0"
 model, label_map = None, None
 marked_today = set()
 
+import re
+
+def fix_camera_url(url):
+    """Auto-fix common IP webcam URL mistakes."""
+    url = url.strip()
+    if url.isdigit():
+        return int(url)
+    # Remove trailing slash
+    url = url.rstrip("/")
+    # If URL ends with just a port (no path), append /video
+    # Matches: http://192.168.1.5:8080  or  http://192.0.0.4:4747
+    if re.match(r'^https?://[\d.]+:\d+$', url):
+        url = url + "/video"
+    return url
+
 def get_model():
     global model, label_map
     if model is None:
@@ -115,7 +130,7 @@ def capture_faces(roll):
 def api_start_camera():
     """Open camera once and keep it open for fast frame grabs."""
     cam_url = request.form.get("camera_url", "0")
-    parsed = int(cam_url) if cam_url.isdigit() else cam_url
+    parsed = fix_camera_url(cam_url)
     # Release old camera if different URL
     if capture_cam["cap"] is not None:
         capture_cam["cap"].release()
@@ -155,7 +170,7 @@ def api_capture_frame():
 
     # If camera not started yet, start it now
     if capture_cam["cap"] is None or not capture_cam["cap"].isOpened():
-        parsed = int(cam_url) if cam_url.isdigit() else cam_url
+        parsed = fix_camera_url(cam_url)
         cap = cv2.VideoCapture(parsed)
         if not cap.isOpened():
             return jsonify({"error": "Cannot open camera", "count": existing})
@@ -225,8 +240,7 @@ def train():
 def gen_frames(cam_url):
     global marked_today
     mdl, lmap = get_model()
-    if cam_url.isdigit():
-        cam_url = int(cam_url)
+    cam_url = fix_camera_url(cam_url)
     cap = cv2.VideoCapture(cam_url)
     today = datetime.date.today().isoformat()
     # Cache roll_number -> student name lookups
