@@ -217,6 +217,8 @@ def gen_frames(cam_url):
         cam_url = int(cam_url)
     cap = cv2.VideoCapture(cam_url)
     today = datetime.date.today().isoformat()
+    # Cache roll_number -> student name lookups
+    name_cache = {}
     while True:
         ret, frame = cap.read()
         if not ret:
@@ -225,10 +227,25 @@ def gen_frames(cam_url):
         faces, gray = detect_faces(frame)
         for (x, y, w, h) in faces:
             face_roi = frame[y:y+h, x:x+w]
-            name, conf = "Unknown", 0
+            roll_number, conf = "Unknown", 0
             if mdl is not None:
-                name, conf = recognize_face(face_roi, mdl, lmap)
-            color = (0, 255, 0) if name != "Unknown" and conf > 60 else (0, 0, 255)
+                roll_number, conf = recognize_face(face_roi, mdl, lmap)
+
+            # Look up the student's actual name from DB using roll_number
+            display_name = "Unknown"
+            if roll_number != "Unknown" and conf > 60:
+                if roll_number in name_cache:
+                    display_name = name_cache[roll_number]
+                else:
+                    db = get_db()
+                    stu = db.execute("SELECT name FROM students WHERE roll_number=?", (roll_number,)).fetchone()
+                    db.close()
+                    if stu:
+                        # Use first name only
+                        display_name = stu["name"].split()[0]
+                        name_cache[roll_number] = display_name
+
+            color = (0, 255, 0) if display_name != "Unknown" else (0, 0, 255)
             cv2.rectangle(frame, (x, y), (x+w, y+h), color, 2)
             # Corner accents
             l = 20
@@ -240,14 +257,14 @@ def gen_frames(cam_url):
             cv2.line(frame, (x, y+h), (x, y+h-l), color, 3)
             cv2.line(frame, (x+w, y+h), (x+w-l, y+h), color, 3)
             cv2.line(frame, (x+w, y+h), (x+w, y+h-l), color, 3)
-            label = f"{name} ({conf}%)" if name != "Unknown" else "Unknown"
+            label = f"{display_name} ({conf}%)" if display_name != "Unknown" else "Unknown"
             cv2.putText(frame, label, (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.7, color, 2)
             # Auto-mark attendance
-            if name != "Unknown" and conf > 60:
-                key = f"{name}_{today}"
+            if display_name != "Unknown" and conf > 60:
+                key = f"{roll_number}_{today}"
                 if key not in marked_today:
                     db = get_db()
-                    row = db.execute("SELECT id FROM students WHERE name=?", (name,)).fetchone()
+                    row = db.execute("SELECT id FROM students WHERE roll_number=?", (roll_number,)).fetchone()
                     if row:
                         already = db.execute("SELECT 1 FROM attendance WHERE student_id=? AND date=?",
                                              (row["id"], today)).fetchone()
