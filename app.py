@@ -137,13 +137,21 @@ def api_stop_camera():
         capture_cam["cap"] = None
     return jsonify({"success": True})
 
+capture_counter = {"count": 0}
+
 @app.route("/api/capture_frame", methods=["POST"])
 def api_capture_frame():
     roll = request.form.get("roll")
     cam_url = request.form.get("camera_url", "0")
+    skip_preview = request.form.get("skip_preview", "0")
     student_dir = DATASET / roll
     student_dir.mkdir(parents=True, exist_ok=True)
-    existing = len(list(student_dir.glob("*.jpg")))
+
+    # Use counter for speed instead of scanning directory each time
+    if capture_counter.get("roll") != roll:
+        capture_counter["roll"] = roll
+        capture_counter["count"] = len(list(student_dir.glob("*.jpg")))
+    existing = capture_counter["count"]
 
     # If camera not started yet, start it now
     if capture_cam["cap"] is None or not capture_cam["cap"].isOpened():
@@ -162,20 +170,24 @@ def api_capture_frame():
         return jsonify({"error": "Failed to read frame", "count": existing})
     faces, gray = detect_faces(frame)
     if len(faces) == 0:
-        # Send preview even if no face detected
-        _, buf = cv2.imencode(".jpg", frame)
-        b64 = base64.b64encode(buf).decode()
-        return jsonify({"error": "No face detected", "count": existing, "frame": b64})
+        # Lightweight response — no preview image when no face
+        return jsonify({"error": "No face detected", "count": existing})
     x, y, w, h = faces[0]
     face_img = gray[y:y+h, x:x+w]
     face_img = cv2.resize(face_img, (100, 100))
-    img_path = student_dir / f"{existing+1}.jpg"
+    new_count = existing + 1
+    img_path = student_dir / f"{new_count}.jpg"
     cv2.imwrite(str(img_path), face_img)
-    # Draw face box on preview
-    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
-    _, buf = cv2.imencode(".jpg", frame)
-    b64 = base64.b64encode(buf).decode()
-    return jsonify({"success": True, "count": existing + 1, "frame": b64})
+    capture_counter["count"] = new_count
+
+    # Only send preview image every 5th capture to save bandwidth
+    b64 = ""
+    if skip_preview != "1" and (new_count % 5 == 1 or new_count >= 50):
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        _, buf = cv2.imencode(".jpg", frame, [cv2.IMWRITE_JPEG_QUALITY, 50])
+        b64 = base64.b64encode(buf).decode()
+
+    return jsonify({"success": True, "count": new_count, "frame": b64})
 
 @app.route("/api/preview_frame", methods=["POST"])
 def api_preview_frame():

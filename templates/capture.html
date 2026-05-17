@@ -175,17 +175,16 @@ function startCapture() {
     captureCount = 0;
     document.getElementById('stopBtn').style.display = 'inline-flex';
     document.getElementById('startBtn').disabled = true;
-    showStatus('Capturing faces... Move your head slowly.', 'info');
-    interval = setInterval(captureOne, 300);
+    showStatus('Capturing faces rapidly... Move your head slowly.', 'info');
+    // Use rapid chained calls instead of slow interval
+    captureOne();
 }
 
 function stopCapture() {
     capturing = false;
-    clearInterval(interval);
     document.getElementById('stopBtn').style.display = 'none';
     document.getElementById('startBtn').disabled = false;
     showStatus('Capture stopped at ' + captureCount + ' images.', 'success');
-    // Resume live preview
     if (cameraReady) startLivePreview();
 }
 
@@ -197,13 +196,15 @@ function captureOne() {
     fetch('/api/capture_frame', { method: 'POST', body: fd })
     .then(r => r.json())
     .then(d => {
-        if (d.frame) {
+        if (d.frame && d.frame.length > 0) {
             document.getElementById('previewImg').src = 'data:image/jpeg;base64,' + d.frame;
             document.getElementById('previewImg').style.display = 'block';
             document.getElementById('previewText').style.display = 'none';
         }
         if (d.error) {
             document.getElementById('status').textContent = d.error;
+            // Retry immediately even on "no face" errors
+            if (capturing) setTimeout(captureOne, 50);
             return;
         }
         captureCount = d.count;
@@ -213,9 +214,15 @@ function captureOne() {
         if (d.count >= 50) {
             stopCapture();
             showStatus('Done! 50 face images captured successfully!', 'success');
+            return;
         }
+        // Immediately capture next — no delay!
+        if (capturing) captureOne();
     })
-    .catch(e => { document.getElementById('status').textContent = 'Error: ' + e; });
+    .catch(e => {
+        document.getElementById('status').textContent = 'Error: ' + e;
+        if (capturing) setTimeout(captureOne, 100);
+    });
 }
 </script>
 {% endblock %}
