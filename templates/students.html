@@ -9,11 +9,11 @@
     </div>
     <div class="table-wrap">
     <table>
-        <thead><tr><th>ID</th><th>Name</th><th>Roll No.</th><th>Department</th><th>Created</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Sr. No.</th><th>Name</th><th>Roll No.</th><th>Department</th><th>Created</th><th>Actions</th></tr></thead>
         <tbody>
         {% for s in students %}
         <tr>
-            <td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.roll_number }}</td><td>{{ s.department }}</td><td>{{ s.created_at }}</td>
+            <td>{{ loop.index }}</td><td>{{ s.name }}</td><td>{{ s.roll_number }}</td><td>{{ s.department }}</td><td>{{ s.created_at }}</td>
             <td><a href="/students/delete/{{ s.id }}" class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="return confirm('Delete this student?')"><i class="fas fa-trash"></i></a></td>
         </tr>
         {% endfor %}
