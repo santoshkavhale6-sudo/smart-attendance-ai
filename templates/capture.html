@@ -5,61 +5,217 @@
 <div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
     <div class="card">
         <div class="form-group">
-            <label>Camera URL (use 0 for built-in, or IP Webcam URL)</label>
-            <input type="text" id="camUrl" value="0" placeholder="http://192.168.1.5:8080/video">
+            <label>Camera URL</label>
+            <input type="text" id="camUrl" value="0" placeholder="0 = built-in, or http://192.168.x.x:8080/video">
+            <p style="margin-top:6px;font-size:12px;color:var(--text2)">
+                <b>0</b> = Built-in webcam &nbsp;|&nbsp;
+                <b>DroidCam:</b> http://IP:4747/video &nbsp;|&nbsp;
+                <b>IP Webcam:</b> http://IP:8080/video
+            </p>
         </div>
-        <div id="preview" class="video-container" style="min-height:300px;display:flex;align-items:center;justify-content:center;color:var(--text2)">
-            <span>Preview will appear here</span>
+
+        <!-- Camera status -->
+        <div id="camStatus" style="padding:10px 14px;border-radius:8px;margin-bottom:12px;font-size:13px;display:none"></div>
+
+        <!-- Live preview -->
+        <div id="preview" class="video-container" style="min-height:300px;display:flex;align-items:center;justify-content:center;color:var(--text2);background:#000">
+            <span id="previewText"><i class="fas fa-video-slash" style="font-size:24px;margin-bottom:8px;display:block"></i>Click "Open Camera" to start</span>
+            <img id="previewImg" style="width:100%;display:none;border-radius:12px">
         </div>
-        <p style="margin-top:12px;font-size:14px;color:var(--text2)">Captured: <span id="count" style="color:var(--accent);font-weight:700">0</span> / 50</p>
-        <div style="margin-top:6px;background:var(--surface2);border-radius:6px;height:8px;overflow:hidden">
+
+        <!-- Counters -->
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px">
+            <p style="font-size:14px;color:var(--text2)">Captured: <span id="count" style="color:var(--accent);font-weight:700;font-size:18px">0</span> / 50</p>
+            <p id="fpsDisplay" style="font-size:12px;color:var(--text2)"></p>
+        </div>
+        <div style="margin-top:6px;background:var(--surface2);border-radius:6px;height:10px;overflow:hidden">
             <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s;border-radius:6px"></div>
         </div>
-        <div style="margin-top:16px;display:flex;gap:10px">
-            <button class="btn btn-primary" onclick="startCapture()"><i class="fas fa-play"></i> Auto Capture 50</button>
+
+        <!-- Buttons -->
+        <div style="margin-top:16px;display:flex;gap:10px;flex-wrap:wrap">
+            <button class="btn btn-outline" id="openBtn" onclick="openCamera()"><i class="fas fa-power-off"></i> Open Camera</button>
+            <button class="btn btn-primary" id="startBtn" onclick="startCapture()" disabled><i class="fas fa-play"></i> Auto Capture 50</button>
             <button class="btn btn-danger" id="stopBtn" onclick="stopCapture()" style="display:none"><i class="fas fa-stop"></i> Stop</button>
+            <button class="btn btn-outline" id="closeBtn" onclick="closeCamera()" style="display:none"><i class="fas fa-times"></i> Close Camera</button>
         </div>
+
         <p id="status" style="margin-top:10px;font-size:13px;color:var(--text2)"></p>
     </div>
     <div class="card">
         <h3 style="margin-bottom:10px;font-size:16px;color:#fff"><i class="fas fa-info-circle" style="color:var(--accent)"></i> Instructions</h3>
-        <ul style="color:var(--text2);font-size:14px;line-height:2;padding-left:18px">
+        <ul style="color:var(--text2);font-size:14px;line-height:2.2;padding-left:18px">
+            <li>Enter your camera URL (or leave 0 for built-in webcam)</li>
+            <li>Click <b>"Open Camera"</b> first to connect</li>
             <li>Position your face clearly in front of the camera</li>
-            <li>Ensure good lighting</li>
-            <li>Slowly move your head left, right, up, down</li>
+            <li>Ensure good lighting — avoid backlighting</li>
+            <li>Click <b>"Auto Capture 50"</b> to start</li>
+            <li>Slowly move your head left, right, up, down during capture</li>
             <li>50 images will be captured automatically</li>
             <li>After capture, go to <b>Train Model</b> to train the AI</li>
         </ul>
-        <a href="/train" class="btn btn-outline" style="margin-top:20px"><i class="fas fa-cogs"></i> Go to Train Model</a>
+
+        <div style="margin-top:20px;padding:14px;background:rgba(99,102,241,.1);border:1px solid rgba(99,102,241,.3);border-radius:10px">
+            <h4 style="color:var(--accent);font-size:14px;margin-bottom:8px"><i class="fas fa-mobile-alt"></i> Using Phone Camera?</h4>
+            <p style="color:var(--text2);font-size:13px;line-height:1.6">
+                1. Install <b>DroidCam</b> or <b>IP Webcam</b> on your phone<br>
+                2. Connect phone to same WiFi as this PC<br>
+                3. Open the app on phone — it will show an IP address<br>
+                4. Enter the URL above (e.g. <code style="color:var(--accent)">http://192.168.1.5:4747/video</code>)
+            </p>
+        </div>
+
+        <a href="/train" class="btn btn-primary" style="margin-top:20px;width:100%;justify-content:center"><i class="fas fa-cogs"></i> Go to Train Model</a>
     </div>
 </div>
+
 <script>
-let capturing=false, interval=null;
-function startCapture(){
-    capturing=true;
-    document.getElementById('stopBtn').style.display='inline-flex';
-    document.getElementById('status').textContent='Capturing...';
-    interval=setInterval(captureOne, 400);
+let capturing = false;
+let interval = null;
+let cameraReady = false;
+let captureCount = 0;
+
+function showStatus(msg, type) {
+    const el = document.getElementById('camStatus');
+    el.style.display = 'flex';
+    el.style.alignItems = 'center';
+    el.style.gap = '8px';
+    if (type === 'success') {
+        el.style.background = 'rgba(34,197,94,.15)';
+        el.style.border = '1px solid rgba(34,197,94,.3)';
+        el.style.color = '#22c55e';
+        el.innerHTML = '<i class="fas fa-check-circle"></i> ' + msg;
+    } else if (type === 'error') {
+        el.style.background = 'rgba(239,68,68,.15)';
+        el.style.border = '1px solid rgba(239,68,68,.3)';
+        el.style.color = '#ef4444';
+        el.innerHTML = '<i class="fas fa-exclamation-circle"></i> ' + msg;
+    } else {
+        el.style.background = 'rgba(99,102,241,.15)';
+        el.style.border = '1px solid rgba(99,102,241,.3)';
+        el.style.color = '#6366f1';
+        el.innerHTML = '<i class="fas fa-spinner fa-spin"></i> ' + msg;
+    }
 }
-function stopCapture(){
-    capturing=false;
+
+function openCamera() {
+    const url = document.getElementById('camUrl').value;
+    showStatus('Connecting to camera...', 'info');
+    document.getElementById('openBtn').disabled = true;
+
+    let fd = new FormData();
+    fd.append('camera_url', url);
+    fetch('/api/start_camera', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.error) {
+            showStatus('Failed: ' + d.error, 'error');
+            document.getElementById('openBtn').disabled = false;
+            return;
+        }
+        cameraReady = true;
+        showStatus('Camera connected! Ready to capture.', 'success');
+        document.getElementById('startBtn').disabled = false;
+        document.getElementById('closeBtn').style.display = 'inline-flex';
+        document.getElementById('openBtn').style.display = 'none';
+        // Start live preview
+        startLivePreview();
+    })
+    .catch(e => {
+        showStatus('Connection error: ' + e, 'error');
+        document.getElementById('openBtn').disabled = false;
+    });
+}
+
+function startLivePreview() {
+    // Grab a frame every 500ms just for preview
+    if (!cameraReady) return;
+    let fd = new FormData();
+    fd.append('roll', '{{ roll }}');
+    fd.append('camera_url', document.getElementById('camUrl').value);
+    // Use a special preview endpoint that doesn't save
+    fetch('/api/preview_frame', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.frame) {
+            document.getElementById('previewImg').src = 'data:image/jpeg;base64,' + d.frame;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('previewText').style.display = 'none';
+        }
+        if (cameraReady && !capturing) {
+            setTimeout(startLivePreview, 500);
+        }
+    })
+    .catch(() => {
+        if (cameraReady && !capturing) setTimeout(startLivePreview, 1000);
+    });
+}
+
+function closeCamera() {
+    cameraReady = false;
+    capturing = false;
     clearInterval(interval);
-    document.getElementById('stopBtn').style.display='none';
-    document.getElementById('status').textContent='Stopped.';
+    fetch('/api/stop_camera', { method: 'POST' });
+    document.getElementById('openBtn').style.display = 'inline-flex';
+    document.getElementById('openBtn').disabled = false;
+    document.getElementById('closeBtn').style.display = 'none';
+    document.getElementById('startBtn').disabled = true;
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('previewImg').style.display = 'none';
+    document.getElementById('previewText').style.display = 'block';
+    showStatus('Camera closed.', 'info');
 }
-function captureOne(){
-    if(!capturing)return;
-    let fd=new FormData();
-    fd.append('roll','{{ roll }}');
-    fd.append('camera_url',document.getElementById('camUrl').value);
-    fetch('/api/capture_frame',{method:'POST',body:fd})
-    .then(r=>r.json()).then(d=>{
-        if(d.error){document.getElementById('status').textContent=d.error;return;}
-        document.getElementById('count').textContent=d.count;
-        document.getElementById('progressBar').style.width=(d.count/50*100)+'%';
-        if(d.frame){document.getElementById('preview').innerHTML='<img src="data:image/jpeg;base64,'+d.frame+'" style="width:100%;border-radius:12px">';}
-        if(d.count>=50)stopCapture();
-    }).catch(e=>{document.getElementById('status').textContent='Error: '+e;});
+
+function startCapture() {
+    if (!cameraReady) {
+        showStatus('Open the camera first!', 'error');
+        return;
+    }
+    capturing = true;
+    captureCount = 0;
+    document.getElementById('stopBtn').style.display = 'inline-flex';
+    document.getElementById('startBtn').disabled = true;
+    showStatus('Capturing faces... Move your head slowly.', 'info');
+    interval = setInterval(captureOne, 300);
+}
+
+function stopCapture() {
+    capturing = false;
+    clearInterval(interval);
+    document.getElementById('stopBtn').style.display = 'none';
+    document.getElementById('startBtn').disabled = false;
+    showStatus('Capture stopped at ' + captureCount + ' images.', 'success');
+    // Resume live preview
+    if (cameraReady) startLivePreview();
+}
+
+function captureOne() {
+    if (!capturing) return;
+    let fd = new FormData();
+    fd.append('roll', '{{ roll }}');
+    fd.append('camera_url', document.getElementById('camUrl').value);
+    fetch('/api/capture_frame', { method: 'POST', body: fd })
+    .then(r => r.json())
+    .then(d => {
+        if (d.frame) {
+            document.getElementById('previewImg').src = 'data:image/jpeg;base64,' + d.frame;
+            document.getElementById('previewImg').style.display = 'block';
+            document.getElementById('previewText').style.display = 'none';
+        }
+        if (d.error) {
+            document.getElementById('status').textContent = d.error;
+            return;
+        }
+        captureCount = d.count;
+        document.getElementById('count').textContent = d.count;
+        document.getElementById('progressBar').style.width = (d.count / 50 * 100) + '%';
+        document.getElementById('status').textContent = '';
+        if (d.count >= 50) {
+            stopCapture();
+            showStatus('Done! 50 face images captured successfully!', 'success');
+        }
+    })
+    .catch(e => { document.getElementById('status').textContent = 'Error: ' + e; });
 }
 </script>
 {% endblock %}

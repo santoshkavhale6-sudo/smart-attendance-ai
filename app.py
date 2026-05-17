@@ -102,40 +102,96 @@ def register():
         return redirect(url_for("capture_faces", roll=roll))
     return render_template("register.html")
 
-# ── Face Capture ──
+# ── Face Capture (persistent camera) ──
+capture_cam = {"cap": None, "url": None}
+
 @app.route("/capture/<roll>")
 def capture_faces(roll):
     if not session.get("user"):
         return redirect(url_for("login"))
     return render_template("capture.html", roll=roll)
 
+@app.route("/api/start_camera", methods=["POST"])
+def api_start_camera():
+    """Open camera once and keep it open for fast frame grabs."""
+    cam_url = request.form.get("camera_url", "0")
+    parsed = int(cam_url) if cam_url.isdigit() else cam_url
+    # Release old camera if different URL
+    if capture_cam["cap"] is not None:
+        capture_cam["cap"].release()
+        capture_cam["cap"] = None
+    cap = cv2.VideoCapture(parsed)
+    if not cap.isOpened():
+        return jsonify({"error": "Cannot open camera. Check URL or device."})
+    # Warm up – discard first few frames
+    for _ in range(5):
+        cap.read()
+    capture_cam["cap"] = cap
+    capture_cam["url"] = cam_url
+    return jsonify({"success": True, "message": "Camera opened"})
+
+@app.route("/api/stop_camera", methods=["POST"])
+def api_stop_camera():
+    if capture_cam["cap"] is not None:
+        capture_cam["cap"].release()
+        capture_cam["cap"] = None
+    return jsonify({"success": True})
+
 @app.route("/api/capture_frame", methods=["POST"])
 def api_capture_frame():
     roll = request.form.get("roll")
     cam_url = request.form.get("camera_url", "0")
-    if cam_url.isdigit():
-        cam_url = int(cam_url)
     student_dir = DATASET / roll
     student_dir.mkdir(parents=True, exist_ok=True)
     existing = len(list(student_dir.glob("*.jpg")))
-    cap = cv2.VideoCapture(cam_url)
-    if not cap.isOpened():
-        return jsonify({"error": "Cannot open camera", "count": existing})
+
+    # If camera not started yet, start it now
+    if capture_cam["cap"] is None or not capture_cam["cap"].isOpened():
+        parsed = int(cam_url) if cam_url.isdigit() else cam_url
+        cap = cv2.VideoCapture(parsed)
+        if not cap.isOpened():
+            return jsonify({"error": "Cannot open camera", "count": existing})
+        for _ in range(3):
+            cap.read()
+        capture_cam["cap"] = cap
+        capture_cam["url"] = cam_url
+
+    cap = capture_cam["cap"]
     ret, frame = cap.read()
-    cap.release()
     if not ret:
         return jsonify({"error": "Failed to read frame", "count": existing})
     faces, gray = detect_faces(frame)
     if len(faces) == 0:
-        return jsonify({"error": "No face detected", "count": existing})
+        # Send preview even if no face detected
+        _, buf = cv2.imencode(".jpg", frame)
+        b64 = base64.b64encode(buf).decode()
+        return jsonify({"error": "No face detected", "count": existing, "frame": b64})
     x, y, w, h = faces[0]
     face_img = gray[y:y+h, x:x+w]
     face_img = cv2.resize(face_img, (100, 100))
     img_path = student_dir / f"{existing+1}.jpg"
     cv2.imwrite(str(img_path), face_img)
+    # Draw face box on preview
+    cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
     _, buf = cv2.imencode(".jpg", frame)
     b64 = base64.b64encode(buf).decode()
     return jsonify({"success": True, "count": existing + 1, "frame": b64})
+
+@app.route("/api/preview_frame", methods=["POST"])
+def api_preview_frame():
+    """Read a frame from open camera and return as base64 (no saving)."""
+    if capture_cam["cap"] is None or not capture_cam["cap"].isOpened():
+        return jsonify({"error": "Camera not open"})
+    ret, frame = capture_cam["cap"].read()
+    if not ret:
+        return jsonify({"error": "Failed to read frame"})
+    faces, gray = detect_faces(frame)
+    for (x, y, w, h) in faces:
+        cv2.rectangle(frame, (x, y), (x+w, y+h), (0, 255, 0), 2)
+        cv2.putText(frame, "Face detected", (x, y-10), cv2.FONT_HERSHEY_SIMPLEX, 0.6, (0, 255, 0), 2)
+    _, buf = cv2.imencode(".jpg", frame)
+    b64 = base64.b64encode(buf).decode()
+    return jsonify({"success": True, "frame": b64, "faces": len(faces)})
 
 # ── Training ──
 @app.route("/train", methods=["GET", "POST"])
