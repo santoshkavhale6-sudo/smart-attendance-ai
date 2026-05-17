@@ -380,7 +380,13 @@ def students_list():
     db = get_db()
     rows = db.execute("SELECT * FROM students ORDER BY id DESC").fetchall()
     db.close()
-    return render_template("students.html", students=rows)
+    # Count face images per student
+    students_data = []
+    for s in rows:
+        face_dir = DATASET / s["roll_number"]
+        face_count = len(list(face_dir.glob("*.jpg"))) if face_dir.exists() else 0
+        students_data.append({"student": s, "face_count": face_count})
+    return render_template("students.html", students=students_data)
 
 @app.route("/students/delete/<int:sid>")
 def delete_student(sid):

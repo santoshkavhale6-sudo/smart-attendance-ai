@@ -9,15 +9,31 @@
     </div>
     <div class="table-wrap">
     <table>
-        <thead><tr><th>Sr. No.</th><th>Name</th><th>Roll No.</th><th>Department</th><th>Created</th><th>Actions</th></tr></thead>
+        <thead><tr><th>Sr. No.</th><th>Name</th><th>Roll No.</th><th>Department</th><th>Face Data</th><th>Created</th><th>Actions</th></tr></thead>
         <tbody>
-        {% for s in students %}
+        {% for item in students %}
         <tr>
-            <td>{{ loop.index }}</td><td>{{ s.name }}</td><td>{{ s.roll_number }}</td><td>{{ s.department }}</td><td>{{ s.created_at }}</td>
-            <td><a href="/students/delete/{{ s.id }}" class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="return confirm('Delete this student?')"><i class="fas fa-trash"></i></a></td>
+            <td>{{ loop.index }}</td>
+            <td>{{ item.student.name }}</td>
+            <td>{{ item.student.roll_number }}</td>
+            <td>{{ item.student.department }}</td>
+            <td>
+                {% if item.face_count >= 50 %}
+                <span class="badge badge-green"><i class="fas fa-check"></i> {{ item.face_count }} images</span>
+                {% elif item.face_count > 0 %}
+                <span class="badge" style="background:rgba(234,179,8,.15);color:#eab308"><i class="fas fa-exclamation-triangle"></i> {{ item.face_count }}/50</span>
+                {% else %}
+                <span class="badge badge-red"><i class="fas fa-times"></i> No data</span>
+                {% endif %}
+            </td>
+            <td>{{ item.student.created_at }}</td>
+            <td style="display:flex;gap:6px">
+                <a href="/capture/{{ item.student.roll_number }}" class="btn btn-outline" style="padding:5px 12px;font-size:12px" title="Capture faces"><i class="fas fa-camera"></i></a>
+                <a href="/students/delete/{{ item.student.id }}" class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="return confirm('Delete this student and all their data?')" title="Delete"><i class="fas fa-trash"></i></a>
+            </td>
         </tr>
         {% endfor %}
-        {% if not students %}<tr><td colspan="6" style="text-align:center;color:var(--text2)">No students registered yet</td></tr>{% endif %}
+        {% if not students %}<tr><td colspan="7" style="text-align:center;color:var(--text2)">No students registered yet</td></tr>{% endif %}
         </tbody>
     </table>
     </div>
