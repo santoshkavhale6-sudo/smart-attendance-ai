@@ -242,14 +242,32 @@ def gen_frames(cam_url):
     mdl, lmap = get_model()
     cam_url = fix_camera_url(cam_url)
     cap = cv2.VideoCapture(cam_url)
+    
+    # Create an error frame generator if camera fails
+    def get_error_frame(msg):
+        img = np.zeros((480, 640, 3), dtype=np.uint8)
+        cv2.putText(img, msg, (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+        _, buf = cv2.imencode(".jpg", img)
+        return b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buf.tobytes() + b"\r\n"
+
+    if not cap.isOpened():
+        while True:
+            yield get_error_frame(f"Cannot connect to: {cam_url}")
+            time.sleep(1)
+
     today = datetime.date.today().isoformat()
     # Cache roll_number -> student name lookups
     name_cache = {}
+    fail_count = 0
     while True:
         ret, frame = cap.read()
         if not ret:
+            fail_count += 1
+            if fail_count > 30:
+                yield get_error_frame("Connection lost. Please restart stream.")
             time.sleep(0.1)
             continue
+        fail_count = 0
         faces, gray = detect_faces(frame)
         for (x, y, w, h) in faces:
             face_roi = frame[y:y+h, x:x+w]
