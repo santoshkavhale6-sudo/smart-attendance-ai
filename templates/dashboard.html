@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Smart Attendance{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-th-large"></i> Dashboard</div>
+
+<div class="stats-row">
+    <div class="card stat-card">
+        <div class="stat-value">{{ total_students }}</div>
+        <div class="stat-label"><i class="fas fa-users"></i> Total Students</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ present_today }}</div>
+        <div class="stat-label"><i class="fas fa-check-circle"></i> Present Today</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ absent_today }}</div>
+        <div class="stat-label"><i class="fas fa-times-circle"></i> Absent Today</div>
+    </div>
+    <div class="card stat-card">
+        <div class="stat-value">{{ total_records }}</div>
+        <div class="stat-label"><i class="fas fa-database"></i> Total Records</div>
+    </div>
+</div>
+
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+        <h3 style="margin-bottom:14px;font-size:16px;color:#fff"><i class="fas fa-clock" style="color:var(--accent)"></i> Recent Attendance</h3>
+        <div class="table-wrap">
+        <table>
+            <thead><tr><th>Name</th><th>Roll</th><th>Date</th><th>Time</th><th>Conf.</th></tr></thead>
+            <tbody>
+            {% for r in recent %}
+            <tr><td>{{ r.name }}</td><td>{{ r.roll_number }}</td><td>{{ r.date }}</td><td>{{ r.time }}</td>
+                <td><span class="badge badge-green">{{ "%.1f"|format(r.confidence) }}%</span></td></tr>
+            {% endfor %}
+            {% if not recent %}<tr><td colspan="5" style="text-align:center;color:var(--text2)">No records yet</td></tr>{% endif %}
+            </tbody>
+        </table>
+        </div>
+    </div>
+    <div class="card" style="display:flex;flex-direction:column;align-items:center;justify-content:center;">
+        <h3 style="margin-bottom:14px;font-size:16px;color:#fff;align-self:flex-start"><i class="fas fa-bolt" style="color:var(--accent)"></i> Quick Actions</h3>
+        <div style="display:flex;flex-direction:column;gap:12px;width:100%">
+            <a href="/recognition" class="btn btn-primary" style="justify-content:center"><i class="fas fa-camera"></i> Start Recognition</a>
+            <a href="/register" class="btn btn-outline" style="justify-content:center"><i class="fas fa-user-plus"></i> Register Student</a>
+            <a href="/train" class="btn btn-outline" style="justify-content:center"><i class="fas fa-cogs"></i> Train Model</a>
+            <a href="/export/csv" class="btn btn-outline" style="justify-content:center"><i class="fas fa-download"></i> Export CSV</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

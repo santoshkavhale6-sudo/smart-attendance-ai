@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Train Model{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-cogs"></i> Train Recognition Model</div>
+<div class="card" style="max-width:600px">
+    <p style="color:var(--text2);font-size:14px;margin-bottom:20px">Train the KNN face recognition model using captured face images from the dataset folder. Make sure you have registered students and captured their face images first.</p>
+    <form method="POST" action="/train">
+        <button type="submit" class="btn btn-primary"><i class="fas fa-brain"></i> Train Model Now</button>
+    </form>
+</div>
+{% endblock %}

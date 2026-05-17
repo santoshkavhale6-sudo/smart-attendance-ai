@@ -1,0 +1,33 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-sliders-h"></i> Settings</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+        <h3 style="color:#fff;font-size:16px;margin-bottom:16px"><i class="fas fa-camera" style="color:var(--accent)"></i> Camera Configuration</h3>
+        <div class="form-group"><label>Default Camera URL</label><input type="text" value="0" placeholder="0 for built-in, or http://IP:PORT/video"></div>
+        <button class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+    </div>
+    <div class="card">
+        <h3 style="color:#fff;font-size:16px;margin-bottom:16px"><i class="fas fa-brain" style="color:var(--accent)"></i> Recognition Settings</h3>
+        <div class="form-group"><label>Confidence Threshold (%)</label><input type="number" value="60" min="30" max="99"></div>
+        <div class="form-group"><label>KNN Neighbors (k)</label><input type="number" value="5" min="1" max="20"></div>
+        <button class="btn btn-primary"><i class="fas fa-save"></i> Save</button>
+    </div>
+    <div class="card">
+        <h3 style="color:#fff;font-size:16px;margin-bottom:16px"><i class="fas fa-database" style="color:var(--accent)"></i> Database</h3>
+        <p style="color:var(--text2);font-size:14px;margin-bottom:14px">Backup or reset the attendance database.</p>
+        <div style="display:flex;gap:10px">
+            <button class="btn btn-outline"><i class="fas fa-download"></i> Backup DB</button>
+            <button class="btn btn-danger"><i class="fas fa-trash"></i> Reset DB</button>
+        </div>
+    </div>
+    <div class="card">
+        <h3 style="color:#fff;font-size:16px;margin-bottom:16px"><i class="fas fa-volume-up" style="color:var(--accent)"></i> Voice Assistant</h3>
+        <p style="color:var(--text2);font-size:14px;margin-bottom:14px">Enable or disable voice announcements when attendance is marked.</p>
+        <label style="display:flex;align-items:center;gap:10px;color:var(--text);font-size:14px;cursor:pointer">
+            <input type="checkbox" checked style="accent-color:var(--accent);width:18px;height:18px"> Voice Enabled
+        </label>
+    </div>
+</div>
+{% endblock %}

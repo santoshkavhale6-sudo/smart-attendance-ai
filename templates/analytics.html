@@ -1,0 +1,37 @@
+{% extends "base.html" %}
+{% block title %}Analytics{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-chart-bar"></i> Attendance Analytics</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+        <h3 style="font-size:16px;color:#fff;margin-bottom:14px">Daily Attendance (Last 7 Days)</h3>
+        <canvas id="dailyChart" height="220"></canvas>
+    </div>
+    <div class="card">
+        <h3 style="font-size:16px;color:#fff;margin-bottom:14px">Present vs Absent Today</h3>
+        <canvas id="pieChart" height="220"></canvas>
+    </div>
+    <div class="card" style="grid-column:span 2">
+        <h3 style="font-size:16px;color:#fff;margin-bottom:14px">Per-Student Attendance Count</h3>
+        <canvas id="studentChart" height="140"></canvas>
+    </div>
+</div>
+<script>
+const accent='rgba(99,102,241,0.8)', accent2='rgba(139,92,246,0.8)';
+new Chart(document.getElementById('dailyChart'),{
+    type:'bar',
+    data:{labels:{{ daily_labels|safe }},datasets:[{label:'Present',data:{{ daily_values|safe }},backgroundColor:accent,borderRadius:6}]},
+    options:{plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.05)'}}}}
+});
+new Chart(document.getElementById('pieChart'),{
+    type:'doughnut',
+    data:{labels:['Present','Absent'],datasets:[{data:[{{ present }},{{ absent }}],backgroundColor:[accent,'rgba(239,68,68,0.7)'],borderWidth:0}]},
+    options:{plugins:{legend:{labels:{color:'#94a3b8'}}}}
+});
+new Chart(document.getElementById('studentChart'),{
+    type:'bar',
+    data:{labels:{{ stu_labels|safe }},datasets:[{label:'Days Present',data:{{ stu_values|safe }},backgroundColor:accent2,borderRadius:6}]},
+    options:{indexAxis:'y',plugins:{legend:{labels:{color:'#94a3b8'}}},scales:{x:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.05)'}},y:{ticks:{color:'#94a3b8'},grid:{color:'rgba(255,255,255,.05)'}}}}
+});
+</script>
+{% endblock %}

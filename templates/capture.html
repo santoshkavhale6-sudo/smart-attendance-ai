@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block title %}Capture Faces{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-camera-retro"></i> Capture Face Images — {{ roll }}</div>
+<div style="display:grid;grid-template-columns:1fr 1fr;gap:20px">
+    <div class="card">
+        <div class="form-group">
+            <label>Camera URL (use 0 for built-in, or IP Webcam URL)</label>
+            <input type="text" id="camUrl" value="0" placeholder="http://192.168.1.5:8080/video">
+        </div>
+        <div id="preview" class="video-container" style="min-height:300px;display:flex;align-items:center;justify-content:center;color:var(--text2)">
+            <span>Preview will appear here</span>
+        </div>
+        <p style="margin-top:12px;font-size:14px;color:var(--text2)">Captured: <span id="count" style="color:var(--accent);font-weight:700">0</span> / 50</p>
+        <div style="margin-top:6px;background:var(--surface2);border-radius:6px;height:8px;overflow:hidden">
+            <div id="progressBar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--accent),var(--accent2));transition:.3s;border-radius:6px"></div>
+        </div>
+        <div style="margin-top:16px;display:flex;gap:10px">
+            <button class="btn btn-primary" onclick="startCapture()"><i class="fas fa-play"></i> Auto Capture 50</button>
+            <button class="btn btn-danger" id="stopBtn" onclick="stopCapture()" style="display:none"><i class="fas fa-stop"></i> Stop</button>
+        </div>
+        <p id="status" style="margin-top:10px;font-size:13px;color:var(--text2)"></p>
+    </div>
+    <div class="card">
+        <h3 style="margin-bottom:10px;font-size:16px;color:#fff"><i class="fas fa-info-circle" style="color:var(--accent)"></i> Instructions</h3>
+        <ul style="color:var(--text2);font-size:14px;line-height:2;padding-left:18px">
+            <li>Position your face clearly in front of the camera</li>
+            <li>Ensure good lighting</li>
+            <li>Slowly move your head left, right, up, down</li>
+            <li>50 images will be captured automatically</li>
+            <li>After capture, go to <b>Train Model</b> to train the AI</li>
+        </ul>
+        <a href="/train" class="btn btn-outline" style="margin-top:20px"><i class="fas fa-cogs"></i> Go to Train Model</a>
+    </div>
+</div>
+<script>
+let capturing=false, interval=null;
+function startCapture(){
+    capturing=true;
+    document.getElementById('stopBtn').style.display='inline-flex';
+    document.getElementById('status').textContent='Capturing...';
+    interval=setInterval(captureOne, 400);
+}
+function stopCapture(){
+    capturing=false;
+    clearInterval(interval);
+    document.getElementById('stopBtn').style.display='none';
+    document.getElementById('status').textContent='Stopped.';
+}
+function captureOne(){
+    if(!capturing)return;
+    let fd=new FormData();
+    fd.append('roll','{{ roll }}');
+    fd.append('camera_url',document.getElementById('camUrl').value);
+    fetch('/api/capture_frame',{method:'POST',body:fd})
+    .then(r=>r.json()).then(d=>{
+        if(d.error){document.getElementById('status').textContent=d.error;return;}
+        document.getElementById('count').textContent=d.count;
+        document.getElementById('progressBar').style.width=(d.count/50*100)+'%';
+        if(d.frame){document.getElementById('preview').innerHTML='<img src="data:image/jpeg;base64,'+d.frame+'" style="width:100%;border-radius:12px">';}
+        if(d.count>=50)stopCapture();
+    }).catch(e=>{document.getElementById('status').textContent='Error: '+e;});
+}
+</script>
+{% endblock %}

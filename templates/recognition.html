@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Live Recognition{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-camera"></i> Live Face Recognition</div>
+<div class="card" style="max-width:700px">
+    <div class="form-group">
+        <label>Camera URL (0 for built-in, or IP Webcam stream URL)</label>
+        <div style="display:flex;gap:10px">
+            <input type="text" id="camUrl" value="0" placeholder="http://192.168.1.5:8080/video" style="flex:1">
+            <button class="btn btn-primary" onclick="startFeed()"><i class="fas fa-play"></i> Start</button>
+            <button class="btn btn-danger" onclick="stopFeed()"><i class="fas fa-stop"></i> Stop</button>
+        </div>
+    </div>
+    <div class="video-container" style="margin-top:14px;min-height:400px;display:flex;align-items:center;justify-content:center">
+        <img id="feed" style="display:none;width:100%">
+        <span id="placeholder" style="color:var(--text2)">Click Start to begin live recognition</span>
+    </div>
+    <p style="margin-top:12px;font-size:13px;color:var(--text2)"><i class="fas fa-info-circle"></i> Attendance is marked automatically when a face is recognized with confidence &gt; 60%. Green box = recognized, red box = unknown.</p>
+</div>
+<script>
+function startFeed(){
+    let url=document.getElementById('camUrl').value;
+    let img=document.getElementById('feed');
+    img.src='/video_feed?url='+encodeURIComponent(url);
+    img.style.display='block';
+    document.getElementById('placeholder').style.display='none';
+}
+function stopFeed(){
+    let img=document.getElementById('feed');
+    img.src='';
+    img.style.display='none';
+    document.getElementById('placeholder').style.display='block';
+}
+</script>
+{% endblock %}

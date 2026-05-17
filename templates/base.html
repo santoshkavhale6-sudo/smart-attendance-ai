@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{% block title %}Smart Attendance{% endblock %}</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+:root{--bg:#0a0a1a;--surface:rgba(255,255,255,.06);--surface2:rgba(255,255,255,.1);--border:rgba(255,255,255,.12);--accent:#6366f1;--accent2:#8b5cf6;--accent-glow:rgba(99,102,241,.35);--green:#22c55e;--red:#ef4444;--yellow:#eab308;--text:#e2e8f0;--text2:#94a3b8;--font:'Inter',sans-serif}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:var(--font);background:var(--bg);color:var(--text);min-height:100vh;display:flex}
+a{color:var(--accent);text-decoration:none}
+/* Sidebar */
+.sidebar{width:240px;background:rgba(15,15,35,.95);border-right:1px solid var(--border);display:flex;flex-direction:column;position:fixed;top:0;left:0;bottom:0;z-index:100}
+.sidebar .logo{padding:24px 20px;font-size:18px;font-weight:700;color:#fff;display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--border)}
+.sidebar .logo i{color:var(--accent);font-size:22px}
+.sidebar nav{flex:1;padding:12px 0}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:12px 20px;color:var(--text2);font-size:14px;font-weight:500;transition:.2s}
+.sidebar nav a:hover,.sidebar nav a.active{background:var(--surface2);color:#fff}
+.sidebar nav a.active{border-left:3px solid var(--accent);background:var(--accent-glow)}
+.sidebar nav a i{width:20px;text-align:center}
+/* Main content */
+.main{margin-left:240px;flex:1;padding:28px 32px;min-height:100vh}
+.page-title{font-size:26px;font-weight:700;margin-bottom:24px;display:flex;align-items:center;gap:12px}
+.page-title i{color:var(--accent)}
+/* Cards */
+.card{background:var(--surface);backdrop-filter:blur(12px);border:1px solid var(--border);border-radius:14px;padding:20px;transition:.3s}
+.card:hover{border-color:var(--accent);box-shadow:0 0 20px var(--accent-glow)}
+/* Stat cards row */
+.stats-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin-bottom:24px}
+.stat-card{text-align:center;padding:24px 16px}
+.stat-card .stat-value{font-size:36px;font-weight:700;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.stat-card .stat-label{font-size:13px;color:var(--text2);margin-top:6px;text-transform:uppercase;letter-spacing:1px}
+/* Table */
+.table-wrap{overflow-x:auto;margin-top:16px}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:12px 16px;font-size:14px;border-bottom:1px solid var(--border)}
+th{color:var(--text2);font-weight:600;text-transform:uppercase;font-size:12px;letter-spacing:.5px}
+tr:hover{background:var(--surface2)}
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 20px;border-radius:8px;font-size:14px;font-weight:600;cursor:pointer;border:none;transition:.25s;font-family:var(--font)}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff}
+.btn-primary:hover{transform:translateY(-2px);box-shadow:0 6px 20px var(--accent-glow)}
+.btn-danger{background:var(--red);color:#fff}
+.btn-success{background:var(--green);color:#fff}
+.btn-outline{background:transparent;border:1px solid var(--border);color:var(--text)}
+.btn-outline:hover{border-color:var(--accent);color:var(--accent)}
+/* Forms */
+.form-group{margin-bottom:16px}
+.form-group label{display:block;font-size:13px;color:var(--text2);margin-bottom:6px;font-weight:500}
+.form-group input,.form-group select{width:100%;padding:10px 14px;background:var(--surface);border:1px solid var(--border);border-radius:8px;color:var(--text);font-size:14px;font-family:var(--font);outline:none;transition:.2s}
+.form-group input:focus{border-color:var(--accent);box-shadow:0 0 0 3px var(--accent-glow)}
+/* Flash messages */
+.flash{padding:12px 20px;border-radius:8px;margin-bottom:16px;font-size:14px;display:flex;align-items:center;gap:10px}
+.flash.success{background:rgba(34,197,94,.15);border:1px solid rgba(34,197,94,.3);color:var(--green)}
+.flash.error{background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:var(--red)}
+/* Badge */
+.badge{display:inline-block;padding:3px 10px;border-radius:20px;font-size:12px;font-weight:600}
+.badge-green{background:rgba(34,197,94,.15);color:var(--green)}
+.badge-red{background:rgba(239,68,68,.15);color:var(--red)}
+/* Video */
+.video-container{border-radius:14px;overflow:hidden;border:2px solid var(--border);background:#000;position:relative}
+.video-container img{width:100%;display:block}
+/* Responsive */
+@media(max-width:768px){.sidebar{width:60px}.sidebar .logo span,.sidebar nav a span{display:none}.main{margin-left:60px;padding:16px}}
+</style>
+{% block extra_head %}{% endblock %}
+</head>
+<body>
+{% block sidebar %}
+<div class="sidebar">
+    <div class="logo"><i class="fas fa-brain"></i><span>SmartAttend</span></div>
+    <nav>
+        <a href="/dashboard" class="{% if request.path=='/dashboard' %}active{% endif %}"><i class="fas fa-th-large"></i><span>Dashboard</span></a>
+        <a href="/recognition" class="{% if request.path=='/recognition' %}active{% endif %}"><i class="fas fa-camera"></i><span>Recognition</span></a>
+        <a href="/register" class="{% if request.path=='/register' %}active{% endif %}"><i class="fas fa-user-plus"></i><span>Register</span></a>
+        <a href="/students" class="{% if request.path=='/students' %}active{% endif %}"><i class="fas fa-users"></i><span>Students</span></a>
+        <a href="/train" class="{% if request.path=='/train' %}active{% endif %}"><i class="fas fa-cogs"></i><span>Train Model</span></a>
+        <a href="/attendance" class="{% if request.path=='/attendance' %}active{% endif %}"><i class="fas fa-clipboard-list"></i><span>Attendance</span></a>
+        <a href="/analytics" class="{% if request.path=='/analytics' %}active{% endif %}"><i class="fas fa-chart-bar"></i><span>Analytics</span></a>
+        <a href="/export" class="{% if request.path=='/export' %}active{% endif %}"><i class="fas fa-file-export"></i><span>Export</span></a>
+        <a href="/settings" class="{% if request.path=='/settings' %}active{% endif %}"><i class="fas fa-sliders-h"></i><span>Settings</span></a>
+        <a href="/about" class="{% if request.path=='/about' %}active{% endif %}"><i class="fas fa-info-circle"></i><span>About</span></a>
+        <a href="/logout" style="margin-top:auto;border-top:1px solid var(--border);color:var(--red)"><i class="fas fa-sign-out-alt"></i><span>Logout</span></a>
+    </nav>
+</div>
+{% endblock %}
+<div class="main">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash {{ cat }}"><i class="fas fa-{% if cat=='success' %}check-circle{% else %}exclamation-circle{% endif %}"></i>{{ msg }}</div>
+    {% endfor %}
+    {% endwith %}
+    {% block content %}{% endblock %}
+</div>
+{% block scripts %}{% endblock %}
+</body>
+</html>

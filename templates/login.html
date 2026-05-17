@@ -1,0 +1,68 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Login — Smart Attendance</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',sans-serif;min-height:100vh;display:flex;align-items:center;justify-content:center;
+background:linear-gradient(135deg,#0a0a1a 0%,#1a1040 40%,#0f0f2e 100%);overflow:hidden;position:relative}
+/* Animated background orbs */
+.orb{position:fixed;border-radius:50%;filter:blur(80px);opacity:.25;animation:float 8s ease-in-out infinite}
+.orb-1{width:400px;height:400px;background:#6366f1;top:-100px;left:-100px;animation-delay:0s}
+.orb-2{width:350px;height:350px;background:#8b5cf6;bottom:-80px;right:-80px;animation-delay:2s}
+.orb-3{width:250px;height:250px;background:#3b82f6;top:50%;left:60%;animation-delay:4s}
+@keyframes float{0%,100%{transform:translateY(0) scale(1)}50%{transform:translateY(-30px) scale(1.05)}}
+/* Login card */
+.login-card{width:420px;background:rgba(255,255,255,.06);backdrop-filter:blur(24px);border:1px solid rgba(255,255,255,.12);
+border-radius:20px;padding:44px 36px;position:relative;z-index:10;box-shadow:0 20px 60px rgba(0,0,0,.4)}
+.login-card h1{text-align:center;font-size:28px;color:#fff;margin-bottom:6px;display:flex;align-items:center;justify-content:center;gap:10px}
+.login-card h1 i{color:#6366f1;font-size:26px}
+.login-card p.subtitle{text-align:center;color:#94a3b8;font-size:14px;margin-bottom:32px}
+.form-group{margin-bottom:18px;position:relative}
+.form-group label{display:block;color:#94a3b8;font-size:13px;margin-bottom:6px;font-weight:500}
+.form-group input{width:100%;padding:12px 14px;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.12);
+border-radius:10px;color:#e2e8f0;font-size:15px;font-family:'Inter';outline:none;transition:.25s}
+.form-group input:focus{border-color:#6366f1;box-shadow:0 0 0 3px rgba(99,102,241,.3)}
+.form-group .toggle-pw{position:absolute;right:14px;top:36px;color:#94a3b8;cursor:pointer;font-size:15px}
+.remember{display:flex;align-items:center;gap:8px;margin-bottom:24px;color:#94a3b8;font-size:13px}
+.remember input[type=checkbox]{accent-color:#6366f1}
+.btn-login{width:100%;padding:13px;border:none;border-radius:10px;font-size:15px;font-weight:600;cursor:pointer;
+background:linear-gradient(135deg,#6366f1,#8b5cf6);color:#fff;font-family:'Inter';transition:.3s}
+.btn-login:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(99,102,241,.4)}
+.flash{margin-bottom:16px;padding:10px 14px;border-radius:8px;font-size:13px;background:rgba(239,68,68,.15);border:1px solid rgba(239,68,68,.3);color:#ef4444;text-align:center}
+.footer-text{text-align:center;margin-top:24px;font-size:12px;color:#475569}
+</style>
+</head>
+<body>
+<div class="orb orb-1"></div>
+<div class="orb orb-2"></div>
+<div class="orb orb-3"></div>
+<div class="login-card">
+    <h1><i class="fas fa-brain"></i> SmartAttend</h1>
+    <p class="subtitle">AI-Powered Attendance Management</p>
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% for cat, msg in messages %}
+    <div class="flash">{{ msg }}</div>
+    {% endfor %}
+    {% endwith %}
+    <form method="POST" action="/login">
+        <div class="form-group">
+            <label>Username</label>
+            <input type="text" name="username" placeholder="Enter username" autofocus required>
+        </div>
+        <div class="form-group">
+            <label>Password</label>
+            <input type="password" name="password" id="pw" placeholder="Enter password" required>
+            <i class="fas fa-eye toggle-pw" onclick="let p=document.getElementById('pw');p.type=p.type==='password'?'text':'password';this.classList.toggle('fa-eye-slash')"></i>
+        </div>
+        <label class="remember"><input type="checkbox"> Remember me</label>
+        <button type="submit" class="btn-login">Sign In</button>
+    </form>
+    <p class="footer-text">Default: admin / admin123</p>
+</div>
+</body>
+</html>

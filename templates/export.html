@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Export Reports{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-file-export"></i> Export Reports</div>
+<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:20px">
+    <div class="card" style="text-align:center;padding:30px">
+        <i class="fas fa-file-csv" style="font-size:40px;color:var(--green);margin-bottom:14px"></i>
+        <h3 style="color:#fff;margin-bottom:8px">CSV Export</h3>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Download attendance data as CSV file</p>
+        <a href="/export/csv" class="btn btn-success"><i class="fas fa-download"></i> Download CSV</a>
+    </div>
+    <div class="card" style="text-align:center;padding:30px">
+        <i class="fas fa-file-excel" style="font-size:40px;color:#22c55e;margin-bottom:14px"></i>
+        <h3 style="color:#fff;margin-bottom:8px">Excel Export</h3>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Download attendance data as Excel file</p>
+        <a href="/export/excel" class="btn btn-success"><i class="fas fa-download"></i> Download Excel</a>
+    </div>
+    <div class="card" style="text-align:center;padding:30px">
+        <i class="fas fa-print" style="font-size:40px;color:var(--accent);margin-bottom:14px"></i>
+        <h3 style="color:#fff;margin-bottom:8px">Print Report</h3>
+        <p style="color:var(--text2);font-size:13px;margin-bottom:16px">Print the attendance history page</p>
+        <button class="btn btn-primary" onclick="window.print()"><i class="fas fa-print"></i> Print</button>
+    </div>
+</div>
+{% endblock %}

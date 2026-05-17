@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Attendance History{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-clipboard-list"></i> Attendance History</div>
+<div class="card">
+    <form method="GET" action="/attendance" style="display:flex;gap:12px;align-items:end;margin-bottom:16px">
+        <div class="form-group" style="margin-bottom:0;flex:1">
+            <label>Filter by Date</label>
+            <input type="date" name="date" value="{{ date_filter }}">
+        </div>
+        <button type="submit" class="btn btn-primary"><i class="fas fa-filter"></i> Filter</button>
+        <a href="/attendance" class="btn btn-outline"><i class="fas fa-redo"></i> Reset</a>
+    </form>
+    <div class="table-wrap">
+    <table>
+        <thead><tr><th>Name</th><th>Roll No.</th><th>Department</th><th>Date</th><th>Time</th><th>Confidence</th></tr></thead>
+        <tbody>
+        {% for r in records %}
+        <tr><td>{{ r.name }}</td><td>{{ r.roll_number }}</td><td>{{ r.department }}</td><td>{{ r.date }}</td><td>{{ r.time }}</td>
+            <td><span class="badge badge-green">{{ "%.1f"|format(r.confidence) }}%</span></td></tr>
+        {% endfor %}
+        {% if not records %}<tr><td colspan="6" style="text-align:center;color:var(--text2)">No records found</td></tr>{% endif %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}

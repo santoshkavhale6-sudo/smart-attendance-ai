@@ -1,0 +1,25 @@
+{% extends "base.html" %}
+{% block title %}Students{% endblock %}
+{% block content %}
+<div class="page-title"><i class="fas fa-users"></i> Registered Students</div>
+<div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px">
+        <p style="color:var(--text2);font-size:14px">{{ students|length }} students registered</p>
+        <a href="/register" class="btn btn-primary"><i class="fas fa-user-plus"></i> Add Student</a>
+    </div>
+    <div class="table-wrap">
+    <table>
+        <thead><tr><th>ID</th><th>Name</th><th>Roll No.</th><th>Department</th><th>Created</th><th>Actions</th></tr></thead>
+        <tbody>
+        {% for s in students %}
+        <tr>
+            <td>{{ s.id }}</td><td>{{ s.name }}</td><td>{{ s.roll_number }}</td><td>{{ s.department }}</td><td>{{ s.created_at }}</td>
+            <td><a href="/students/delete/{{ s.id }}" class="btn btn-danger" style="padding:5px 12px;font-size:12px" onclick="return confirm('Delete this student?')"><i class="fas fa-trash"></i></a></td>
+        </tr>
+        {% endfor %}
+        {% if not students %}<tr><td colspan="6" style="text-align:center;color:var(--text2)">No students registered yet</td></tr>{% endif %}
+        </tbody>
+    </table>
+    </div>
+</div>
+{% endblock %}
