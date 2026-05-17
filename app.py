@@ -246,7 +246,8 @@ def gen_frames(cam_url):
     # Create an error frame generator if camera fails
     def get_error_frame(msg):
         img = np.zeros((480, 640, 3), dtype=np.uint8)
-        cv2.putText(img, msg, (50, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.8, (0, 0, 255), 2)
+        # Handle long error messages by making font smaller
+        cv2.putText(img, msg, (20, 240), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (0, 0, 255), 2)
         _, buf = cv2.imencode(".jpg", img)
         return b"--frame\r\nContent-Type: image/jpeg\r\n\r\n" + buf.tobytes() + b"\r\n"
 

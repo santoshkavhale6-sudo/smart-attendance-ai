@@ -112,7 +112,7 @@ def recognize_face(face_roi, model, label_map):
 
     # If average distance is too high, face is not a good match
     # This prevents recognizing strangers as known students
-    if avg_dist > 8.0:
+    if avg_dist > 22.0:
         return "Unknown", round(proba * 100, 1)
 
     return name, round(proba * 100, 1)
